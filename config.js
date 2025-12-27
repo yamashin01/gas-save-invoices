@@ -22,21 +22,25 @@ const SETTINGS_COLUMNS = {
   EMAIL: 0,      // 送信元メールアドレス
   COMPANY: 1,    // 会社名
   KEYWORD: 2,    // 検索キーワード
-  ENABLED: 3     // 有効フラグ
+  CURRENCY: 3,   // 通貨（JPY / USD）
+  ENABLED: 4     // 有効フラグ
 };
 
 /**
  * 請求書一覧シートのカラム定義
  */
 const INVOICE_COLUMNS = {
-  MESSAGE_ID: 0,    // Message ID
-  RECEIVED_DATE: 1, // 受信日
-  COMPANY: 2,       // 請求元
-  AMOUNT_AUTO: 3,   // 金額（自動）
-  AMOUNT_FINAL: 4,  // 金額（確定）
-  STATUS: 5,        // ステータス
-  PDF_LINK: 6,      // PDFリンク
-  PROCESSED_AT: 7   // 処理日時
+  MESSAGE_ID: 0,      // Message ID
+  RECEIVED_DATE: 1,   // 受信日
+  COMPANY: 2,         // 請求元
+  CURRENCY: 3,        // 通貨
+  AMOUNT_ORIGINAL: 4, // 金額（原通貨）
+  EXCHANGE_RATE: 5,   // 為替レート
+  AMOUNT_AUTO: 6,     // 金額（自動・円）
+  AMOUNT_FINAL: 7,    // 金額（確定）
+  STATUS: 8,          // ステータス
+  PDF_LINK: 9,        // PDFリンク
+  PROCESSED_AT: 10    // 処理日時
 };
 
 /**

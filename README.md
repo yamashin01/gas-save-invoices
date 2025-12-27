@@ -87,10 +87,14 @@
 
 スプレッドシートの「設定」シートに、請求書が届く送信元を登録:
 
-| 送信元メールアドレス | 会社名 | 検索キーワード | 有効 |
-|:--|:--|:--|:--|
-| invoice@example.co.jp | Example社 | 請求書 | TRUE |
-| billing@service.com | サービス株式会社 | ご請求のお知らせ | TRUE |
+| 送信元メールアドレス | 会社名 | 検索キーワード | 通貨 | 有効 |
+|:--|:--|:--|:--|:--|
+| invoice@example.co.jp | Example社 | 請求書 | JPY | TRUE |
+| billing@us-service.com | USサービス社 | Invoice | USD | TRUE |
+
+**通貨の指定:**
+- `JPY` または空欄: 日本円（換算なし）
+- `USD`: 米ドル（自動で円換算）
 
 ### 8. 動作確認
 
@@ -120,6 +124,7 @@
 ├── gmail.gs     ... Gmail操作
 ├── drive.gs     ... ドライブ操作
 ├── gemini.gs    ... Gemini API（金額抽出）
+├── currency.gs  ... 為替レート・通貨換算
 ├── notify.gs    ... 通知機能
 ├── main.gs      ... メイン処理・トリガー
 └── debug.gs     ... デバッグ・テスト用
@@ -148,6 +153,7 @@
 | `debugCheckDriveFolder` | 保存先フォルダを確認 |
 | `debugProcessSingleMessage` | 単一メッセージを処理（テスト用） |
 | `debugExtractAmountFromFile` | 指定PDFから金額抽出テスト |
+| `debugTestExchangeRate` | 為替レート取得・換算テスト |
 
 ---
 
@@ -159,9 +165,10 @@
    - 重複チェック（Message IDで判定）
    - PDF添付ファイルを取得
    - Gemini APIで金額を抽出
-   - ファイル名を生成（日付_会社名_金額.pdf）
+   - USD設定の場合は円換算（Google Financeで為替レート取得）
+   - ファイル名を生成（日付_会社名_金額円.pdf）
    - ドライブに保存
-   - スプレッドシートに記録
+   - スプレッドシートに記録（原通貨金額・為替レート・円換算金額）
 4. 処理結果を通知メールで送信
 
 ---

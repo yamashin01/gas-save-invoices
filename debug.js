@@ -28,6 +28,7 @@ function debugShowSenders() {
       console.log(`${index + 1}. ${sender.company}`);
       console.log(`   Email: ${sender.email}`);
       console.log(`   Keyword: ${sender.keyword}`);
+      console.log(`   Currency: ${sender.currency}`);
     });
   } catch (error) {
     console.error(`エラー: ${error.message}`);
@@ -222,12 +223,31 @@ function debugTestGeminiConnection() {
  */
 function debugTestExtractAmountFromDrive() {
   // テストしたいPDFファイルのIDを指定
-  const fileId = '1-nuKdFZENXcX3stqWWucnferJSe6WUCL';
-
+  const fileId = 'YOUR_PDF_FILE_ID_HERE';
+  
   if (fileId === 'YOUR_PDF_FILE_ID_HERE') {
     console.error('fileId を実際のPDFファイルIDに置き換えてください');
     return;
   }
   
   debugExtractAmountFromFile(fileId);
+}
+
+/**
+ * 為替レート取得のテスト
+ */
+function debugTestExchangeRate() {
+  console.log('=== 為替レート取得テスト ===');
+  
+  clearExchangeRateCache();
+  const rate = getUsdJpyRate();
+  
+  console.log(`現在のUSD/JPYレート: ${rate}`);
+  
+  // 換算テスト
+  const testAmounts = [100, 500, 1000];
+  for (const usd of testAmounts) {
+    const { amountJpy } = convertToJpy(usd, 'USD');
+    console.log(`$${usd} = ¥${amountJpy.toLocaleString()}`);
+  }
 }

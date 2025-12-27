@@ -41,6 +41,9 @@ function processLastMonthInvoices() {
  * @returns {Object} 処理結果
  */
 function processInvoices(startDate, endDate) {
+  // 為替レートキャッシュをクリア（処理開始時に最新レートを取得）
+  clearExchangeRateCache();
+  
   const senders = getEnabledSenders();
   const processedIds = getProcessedMessageIds();
 
@@ -148,17 +151,28 @@ function processMessage(message, sender, messageInfo) {
     console.warn(`複数のPDF添付（${pdfAttachments.length}件）がありますが、最初の1件のみ処理します`);
   }
 
-  // PDFから金額を抽出（Phase 2）
+  // PDFから金額を抽出
   const extractResult = extractAmountFromPdf(pdf);
   const extractedAmount = extractResult.amount;
   const confidence = extractResult.confidence;
 
-  console.log(`金額抽出: ${extractedAmount !== null ? extractedAmount.toLocaleString() + '円' : '失敗'} (信頼度: ${confidence})`);
+  const currency = sender.currency || 'JPY';
+  console.log(`金額抽出: ${extractedAmount !== null ? extractedAmount.toLocaleString() : '失敗'} ${currency} (信頼度: ${confidence})`);
 
-  // ファイル名を生成（金額があれば含める）
-  let fileName;
+  // 通貨換算
+  let amountJpy = null;
+  let exchangeRate = null;
+  
   if (extractedAmount !== null) {
-    fileName = generateInvoiceFileNameWithAmount(messageInfo.date, sender.company, extractedAmount);
+    const converted = convertToJpy(extractedAmount, currency);
+    amountJpy = converted.amountJpy;
+    exchangeRate = converted.rate;
+  }
+
+  // ファイル名を生成（円換算金額があれば含める）
+  let fileName;
+  if (amountJpy !== null) {
+    fileName = generateInvoiceFileNameWithAmount(messageInfo.date, sender.company, amountJpy);
   } else {
     fileName = generateInvoiceFileName(messageInfo.date, sender.company);
   }
@@ -169,7 +183,7 @@ function processMessage(message, sender, messageInfo) {
 
   // ステータスを判定
   let status;
-  if (extractedAmount !== null && confidence === '高') {
+  if (amountJpy !== null && confidence === '高') {
     status = STATUS.COMPLETED;
   } else {
     status = STATUS.NEEDS_CHECK;
@@ -180,7 +194,10 @@ function processMessage(message, sender, messageInfo) {
     messageId: messageInfo.id,
     receivedDate: formatDateDisplay(messageInfo.date),
     company: sender.company,
-    amountAuto: extractedAmount !== null ? extractedAmount : '',
+    currency,
+    amountOriginal: extractedAmount,
+    exchangeRate,
+    amountAuto: amountJpy,
     amountFinal: '',
     status,
     pdfLink,

@@ -4,7 +4,7 @@
 
 /**
  * 設定シートから有効な送信元一覧を取得
- * @returns {Array<{email: string, company: string, keyword: string}>} 送信元設定の配列
+ * @returns {Array<{email: string, company: string, keyword: string, currency: string}>} 送信元設定の配列
  */
 function getEnabledSenders() {
   const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.SETTINGS);
@@ -19,7 +19,8 @@ function getEnabledSenders() {
     .map(row => ({
       email: row[SETTINGS_COLUMNS.EMAIL],
       company: row[SETTINGS_COLUMNS.COMPANY],
-      keyword: row[SETTINGS_COLUMNS.KEYWORD]
+      keyword: row[SETTINGS_COLUMNS.KEYWORD],
+      currency: row[SETTINGS_COLUMNS.CURRENCY] || 'JPY'
     }))
     .filter(sender => sender.email && sender.company);
 
@@ -60,7 +61,10 @@ function addInvoiceRecord(record) {
     record.messageId,
     record.receivedDate,
     record.company,
-    record.amountAuto || '',
+    record.currency || 'JPY',
+    record.amountOriginal !== null && record.amountOriginal !== undefined ? record.amountOriginal : '',
+    record.exchangeRate || '',
+    record.amountAuto !== null && record.amountAuto !== undefined ? record.amountAuto : '',
     record.amountFinal || '',
     record.status,
     record.pdfLink,
@@ -103,8 +107,8 @@ function initializeSheets() {
   let settingsSheet = ss.getSheetByName(SHEET_NAMES.SETTINGS);
   if (!settingsSheet) {
     settingsSheet = ss.insertSheet(SHEET_NAMES.SETTINGS);
-    settingsSheet.appendRow(['送信元メールアドレス', '会社名', '検索キーワード', '有効']);
-    settingsSheet.getRange(1, 1, 1, 4).setFontWeight('bold');
+    settingsSheet.appendRow(['送信元メールアドレス', '会社名', '検索キーワード', '通貨', '有効']);
+    settingsSheet.getRange(1, 1, 1, 5).setFontWeight('bold');
     console.log(`シート「${SHEET_NAMES.SETTINGS}」を作成しました`);
   }
 
@@ -113,10 +117,10 @@ function initializeSheets() {
   if (!invoiceSheet) {
     invoiceSheet = ss.insertSheet(SHEET_NAMES.INVOICE_LIST);
     invoiceSheet.appendRow([
-      'Message ID', '受信日', '請求元', '金額（自動）', '金額（確定）', 
-      'ステータス', 'PDFリンク', '処理日時'
+      'Message ID', '受信日', '請求元', '通貨', '金額（原通貨）', '為替レート',
+      '金額（自動・円）', '金額（確定）', 'ステータス', 'PDFリンク', '処理日時'
     ]);
-    invoiceSheet.getRange(1, 1, 1, 8).setFontWeight('bold');
+    invoiceSheet.getRange(1, 1, 1, 11).setFontWeight('bold');
     // Message ID列を非表示にする（管理用）
     invoiceSheet.hideColumns(1);
     console.log(`シート「${SHEET_NAMES.INVOICE_LIST}」を作成しました`);
