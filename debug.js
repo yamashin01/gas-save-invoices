@@ -156,7 +156,78 @@ function setupScriptProperties() {
   // 以下の値を実際のIDに置き換えてから実行
   // props.setProperty('DRIVE_FOLDER_ID', 'your-folder-id-here');
   // props.setProperty('NOTIFICATION_EMAIL', 'your-email@example.com');
+  // props.setProperty('GEMINI_API_KEY', 'your-gemini-api-key-here');
 
   console.log('スクリプトプロパティを設定しました');
   debugShowProperties();
+}
+
+/**
+ * Gemini API接続テスト
+ */
+function debugTestGeminiConnection() {
+  console.log('=== Gemini API 接続テスト ===');
+  
+  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!apiKey) {
+    console.error('GEMINI_API_KEY が設定されていません');
+    return;
+  }
+  
+  console.log(`APIキー: ${apiKey.substring(0, 5)}...${apiKey.substring(apiKey.length - 5)}`);
+  
+  // シンプルなテストリクエスト
+  const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+  
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          { text: '1+1は？数字だけで答えて。' }
+        ]
+      }
+    ]
+  };
+  
+  try {
+    const response = UrlFetchApp.fetch(testUrl, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(requestBody),
+      muteHttpExceptions: true
+    });
+    
+    const code = response.getResponseCode();
+    const text = response.getContentText();
+    
+    console.log(`レスポンスコード: ${code}`);
+    
+    if (code === 200) {
+      const result = JSON.parse(text);
+      const answer = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      console.log(`応答: ${answer}`);
+      console.log('接続成功！');
+    } else {
+      console.error(`エラー: ${text}`);
+    }
+  } catch (error) {
+    console.error(`接続エラー: ${error.message}`);
+  }
+}
+
+/**
+ * 指定したDriveファイルで金額抽出をテスト
+ * GASエディタから実行する場合は引数なしで実行し、
+ * ファイルIDをコード内で指定してください
+ */
+function debugTestExtractAmountFromDrive() {
+  // テストしたいPDFファイルのIDを指定
+  const fileId = '1-nuKdFZENXcX3stqWWucnferJSe6WUCL';
+
+  if (fileId === 'YOUR_PDF_FILE_ID_HERE') {
+    console.error('fileId を実際のPDFファイルIDに置き換えてください');
+    return;
+  }
+  
+  debugExtractAmountFromFile(fileId);
 }

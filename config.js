@@ -29,7 +29,7 @@ const SETTINGS_COLUMNS = {
  * 請求書一覧シートのカラム定義
  */
 const INVOICE_COLUMNS = {
-  MESSAGE_ID: 0,   // Message ID
+  MESSAGE_ID: 0,    // Message ID
   RECEIVED_DATE: 1, // 受信日
   COMPANY: 2,       // 請求元
   AMOUNT_AUTO: 3,   // 金額（自動）

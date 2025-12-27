@@ -53,7 +53,8 @@ function buildNotificationBody(result) {
   if (result.successCount > 0) {
     lines.push('');
     lines.push('処理した請求書は「請求書一覧」シートで確認できます。');
-    lines.push('金額を確認・入力してください。');
+    lines.push('ステータスが「要確認」の項目は金額を確認・入力してください。');
+    lines.push('（金額抽出の信頼度が高い場合は「完了」になっています）');
   }
 
   return lines.join('\n');

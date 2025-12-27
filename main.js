@@ -4,6 +4,7 @@
  * 【初期設定】
  * 1. スクリプトプロパティに以下を設定:
  *    - DRIVE_FOLDER_ID: PDF保存先フォルダのID
+ *    - GEMINI_API_KEY: Gemini APIのAPIキー（金額自動抽出用）
  *    - NOTIFICATION_EMAIL: 通知先メールアドレス（任意）
  * 
  * 2. initializeSheets() を実行してシートを初期化
@@ -147,26 +148,46 @@ function processMessage(message, sender, messageInfo) {
     console.warn(`複数のPDF添付（${pdfAttachments.length}件）がありますが、最初の1件のみ処理します`);
   }
 
-  // ファイル名を生成
-  const fileName = generateInvoiceFileName(messageInfo.date, sender.company);
+  // PDFから金額を抽出（Phase 2）
+  const extractResult = extractAmountFromPdf(pdf);
+  const extractedAmount = extractResult.amount;
+  const confidence = extractResult.confidence;
+
+  console.log(`金額抽出: ${extractedAmount !== null ? extractedAmount.toLocaleString() + '円' : '失敗'} (信頼度: ${confidence})`);
+
+  // ファイル名を生成（金額があれば含める）
+  let fileName;
+  if (extractedAmount !== null) {
+    fileName = generateInvoiceFileNameWithAmount(messageInfo.date, sender.company, extractedAmount);
+  } else {
+    fileName = generateInvoiceFileName(messageInfo.date, sender.company);
+  }
 
   // ドライブに保存
   const savedFile = savePdfToDrive(pdf, fileName);
   const pdfLink = getFileLink(savedFile);
+
+  // ステータスを判定
+  let status;
+  if (extractedAmount !== null && confidence === '高') {
+    status = STATUS.COMPLETED;
+  } else {
+    status = STATUS.NEEDS_CHECK;
+  }
 
   // スプレッドシートに記録
   addInvoiceRecord({
     messageId: messageInfo.id,
     receivedDate: formatDateDisplay(messageInfo.date),
     company: sender.company,
-    amountAuto: '', // Phase 1では空
+    amountAuto: extractedAmount !== null ? extractedAmount : '',
     amountFinal: '',
-    status: STATUS.NEEDS_CHECK,
+    status,
     pdfLink,
     processedAt: formatDateTime(new Date())
   });
 
-  console.log(`処理完了: ${fileName}`);
+  console.log(`処理完了: ${fileName} (ステータス: ${status})`);
 }
 
 /**
